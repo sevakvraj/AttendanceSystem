@@ -1,9 +1,20 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
+
+export type StudentViewOption =
+  | "attendance"
+  | "timetable"
+  | "holidays"
+  | "assignments"
+  | "materials"
+  | "papers"
+  | "memories"
+  | "credits";
 
 interface DashboardGridProps {
-  onSelectView: (view: "attendance" | "timetable" | "holidays" | "assignments" | "materials" | "papers") => void;
+  onSelectView: (view: StudentViewOption) => void;
   overallPercentage: string;
 }
 
@@ -11,6 +22,7 @@ export const DRIVE_MATERIAL_URL = "https://drive.google.com/drive/folders/1UdDOw
 export const DRIVE_PAPERS_URL = "https://drive.google.com/drive/folders/15uX8l4EUYnN_z6JAXsQMSILrzF63K2du";
 
 export default function DashboardGrid({ onSelectView, overallPercentage }: DashboardGridProps) {
+  const router = useRouter();
   const items = [
     {
       id: "attendance",
@@ -90,17 +102,45 @@ export default function DashboardGrid({ onSelectView, overallPercentage }: Dashb
         </svg>
       ),
     },
+    {
+      id: "memories",
+      title: "Batch Memories",
+      subtitle: "Photos & Moments",
+      action: () => router.push("/student/memories"),
+      iconColor: "text-pink-400",
+      iconBg: "bg-pink-500/10 border border-pink-500/20",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    /* Temporarily commented out until full credits details are finalized
+    {
+      id: "credits",
+      title: "CR & Developer Team",
+      subtitle: "Class Reps & Lead Dev",
+      action: () => router.push("/student/credits"),
+      iconColor: "text-indigo-400",
+      iconBg: "bg-indigo-500/10 border border-indigo-500/20",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      ),
+    },
+    */
   ];
 
   return (
-    <div className="space-y-3 pb-6">
-      {/* Clean 2-column Grid without badges */}
+    <div className="space-y-4 pb-6">
+      {/* 2-column Grid with 8 Clean Feature Modules */}
       <div className="grid grid-cols-2 gap-3.5">
         {items.map((item) => (
           <button
             key={item.id}
             onClick={item.action}
-            className="flex flex-col items-start p-4 rounded-2xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800/60 transition-all duration-200 shadow-sm text-left group active:scale-[0.98]"
+            className="flex flex-col items-start p-4 rounded-2xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800/60 transition-all duration-200 shadow-sm text-left group active:scale-[0.98] cursor-pointer"
           >
             <div className={`w-12 h-12 rounded-xl ${item.iconBg} ${item.iconColor} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-inner`}>
               {item.icon}

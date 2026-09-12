@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from "react";
 import { getStudentAttendanceStats, getStudentAttendanceHistory, AttendanceHistoryItem, getStudentByPid } from "@/services/db";
 import StudentHeader from "@/components/student/StudentHeader";
-import DashboardGrid from "@/components/student/DashboardGrid";
+import DashboardGrid, { StudentViewOption } from "@/components/student/DashboardGrid";
 import AttendanceView, { SubjectStat } from "@/components/student/AttendanceView";
 import TimetableView from "@/components/student/TimetableView";
 import HolidayView from "@/components/student/HolidayView";
 import AssignmentView from "@/components/student/AssignmentView";
 import StudyMaterialView from "@/components/student/StudyMaterialView";
 import OldPapersView from "@/components/student/OldPapersView";
+import MemoriesView from "@/components/student/MemoriesView";
+import CreditsView from "@/components/student/CreditsView";
 import PasswordModal from "@/components/student/PasswordModal";
 
 // Base Subject Template
@@ -22,7 +24,7 @@ const SUBJECT_TEMPLATE: SubjectStat[] = [
   { id: "LAB", name: "Practical Lab", present: 0, total: 0, faculties: { LAB: { present: 0, total: 0 } } },
 ];
 
-export type StudentView = "home" | "attendance" | "timetable" | "holidays" | "assignments" | "materials" | "papers";
+export type StudentView = "home" | StudentViewOption;
 
 export default function StudentDashboard() {
   const [currentView, setCurrentView] = useState<StudentView>("home");
@@ -43,20 +45,19 @@ export default function StudentDashboard() {
     async function fetchData() {
       try {
         // Fetch up-to-date student profile from Firestore (reflects admin changes)
-        const studentDoc = await getStudentByPid(pid);
-        if (studentDoc) {
-          if (studentDoc.isBlocked) {
+        const profile = await getStudentByPid(pid);
+        if (profile) {
+          setStudentInfo({ pid: profile.pid, name: profile.name });
+          if (profile.isBlocked) {
             setIsBlocked(true);
-            setIsLoading(false);
             return;
-          }
-          if (studentDoc.name) {
-            setStudentInfo({ pid, name: studentDoc.name });
-            localStorage.setItem("studentName", studentDoc.name);
           }
         }
 
+        // Fetch attendance aggregated statistics
         const stats = await getStudentAttendanceStats(pid);
+
+        // Fetch detailed lecture history
         const history = await getStudentAttendanceHistory(pid);
         setAttendanceHistory(history);
 
@@ -124,8 +125,8 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center">
-      <div className="w-full max-w-md bg-neutral-950 min-h-screen shadow-2xl flex flex-col relative pb-6">
+    <div className="min-h-screen bg-black flex flex-col items-center scrollbar-none">
+      <div className="w-full max-w-md bg-neutral-950 min-h-screen shadow-2xl flex flex-col relative pb-6 scrollbar-none">
         {/* Top Header with Initials, Name, Dept & Dropdown */}
         <StudentHeader
           name={studentInfo.name}
@@ -139,7 +140,7 @@ export default function StudentDashboard() {
         />
 
         {/* Modular Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none">
           {currentView === "home" && (
             <DashboardGrid
               onSelectView={(view) => setCurrentView(view)}
@@ -178,6 +179,16 @@ export default function StudentDashboard() {
           {currentView === "papers" && (
             <OldPapersView onBack={() => setCurrentView("home")} />
           )}
+
+          {currentView === "memories" && (
+            <MemoriesView onBack={() => setCurrentView("home")} />
+          )}
+
+          {/* Temporarily commented out until full credits details are finalized
+          {currentView === "credits" && (
+            <CreditsView onBack={() => setCurrentView("home")} />
+          )}
+          */}
         </div>
       </div>
 
