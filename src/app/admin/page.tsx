@@ -102,10 +102,15 @@ export default function AdminDashboard() {
     type: "Lecture",
   });
 
-  // Date & Calendar Logic
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 8, 12)); // Default to Sept 12, 2026
+  // Date & Calendar Logic - Dynamically initializes to actual system date
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const MIN_DATE = new Date(2026, 7, 3); // Aug 3, 2026
+  const MIN_DATE = new Date(2026, 7, 3); // Semester Start: Aug 3, 2026
+
+  // Ensure client syncs to exact local system date on mount
+  useEffect(() => {
+    setCurrentDate(new Date());
+  }, []);
   
   // Lecture State
   const [isCancelled, setIsCancelled] = useState(false);
@@ -440,19 +445,25 @@ export default function AdminDashboard() {
       days.push(<div key={`empty-${i}`} className="p-2"></div>);
     }
 
-    const todayDate = new Date(2026, 8, 12);
+    const now = new Date();
+    // End of current system date (today) in local time - guarantees today's attendance can always be marked at any hour
+    const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const minDateStart = new Date(MIN_DATE.getFullYear(), MIN_DATE.getMonth(), MIN_DATE.getDate(), 0, 0, 0, 0);
 
     for (let d = 1; d <= daysInMonth; d++) {
-      const thisDate = new Date(year, month, d);
+      const thisDate = new Date(year, month, d, 0, 0, 0, 0);
       const isSelected = thisDate.toDateString() === currentDate.toDateString();
+      const isToday = thisDate.toDateString() === now.toDateString();
       const isSunday = thisDate.getDay() === 0;
-      const isPastLimit = thisDate < MIN_DATE || thisDate > todayDate;
+      const isPastLimit = thisDate < minDateStart || thisDate > todayDate;
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const isHoliday = !!HOLIDAYS_2026[dateStr];
 
       let btnClass = "text-neutral-300 hover:bg-neutral-800";
       if (isSelected) {
         btnClass = "bg-white text-black font-extrabold shadow-md";
+      } else if (isToday) {
+        btnClass = "text-amber-400 font-extrabold border border-amber-500/50 bg-amber-950/30";
       } else if (isHoliday) {
         btnClass = "bg-blue-600/30 text-blue-400 font-bold border border-blue-500/30";
       } else if (isSunday) {
@@ -469,6 +480,7 @@ export default function AdminDashboard() {
             setIsCalendarOpen(false);
           }}
           className={`p-2 text-xs rounded-lg transition-all flex flex-col items-center justify-center h-8 w-8 mx-auto disabled:opacity-20 disabled:hover:bg-transparent ${btnClass}`}
+          title={isToday ? "Today (System Date)" : isHoliday ? `Holiday: ${HOLIDAYS_2026[dateStr]}` : isSunday ? "Sunday" : undefined}
         >
           {d}
         </button>

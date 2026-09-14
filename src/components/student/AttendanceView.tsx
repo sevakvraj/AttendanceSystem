@@ -215,27 +215,40 @@ export default function AttendanceView({
     });
   }, [selectedSubject]);
 
-  // Generate all calendar dates starting from August 3, 2026 strictly up to system date (today), excluding Sundays
+  // Generate all calendar dates starting from August 3, 2026 strictly up to system date (today), excluding Sundays (unless attendance was recorded)
   const allDaysList = useMemo(() => {
-    const startDate = new Date(2026, 7, 3); // 03 Aug 2026
+    const startDate = new Date(2026, 7, 3); // 03 Aug 2026 (Semester Start)
     const sysDate = new Date();
-    // Strictly up to system date (today) - do not show future dates
-    const maxDate = new Date(sysDate.getFullYear(), sysDate.getMonth(), sysDate.getDate());
+    // System date (today) in local time
+    let maxDate = new Date(sysDate.getFullYear(), sysDate.getMonth(), sysDate.getDate());
+
+    // Also include any dates from attendanceHistory if they are beyond maxDate
+    attendanceHistory.forEach((r) => {
+      if (r.date) {
+        const [ry, rm, rd] = r.date.split("-").map(Number);
+        const rDate = new Date(ry, rm - 1, rd);
+        if (rDate > maxDate) {
+          maxDate = rDate;
+        }
+      }
+    });
 
     const dates: string[] = [];
     const curr = new Date(maxDate);
     while (curr >= startDate) {
-      // Exclude Sunday (day 0)
-      if (curr.getDay() !== 0) {
-        const yyyy = curr.getFullYear();
-        const mm = String(curr.getMonth() + 1).padStart(2, "0");
-        const dd = String(curr.getDate()).padStart(2, "0");
-        dates.push(`${yyyy}-${mm}-${dd}`);
+      const yyyy = curr.getFullYear();
+      const mm = String(curr.getMonth() + 1).padStart(2, "0");
+      const dd = String(curr.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+
+      // Exclude Sunday (day 0) unless attendance was recorded on that Sunday
+      if (curr.getDay() !== 0 || attendanceHistory.some((r) => r.date === dateStr)) {
+        dates.push(dateStr);
       }
       curr.setDate(curr.getDate() - 1);
     }
     return dates;
-  }, []);
+  }, [attendanceHistory]);
 
   const handleSlotClick = (dateStr: string, idx: number) => {
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -460,15 +473,27 @@ export default function AttendanceView({
 
                   const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "short" });
                   const formattedDayMonth = dateObj.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }).replace(" ", "-");
+                  const now = new Date();
+                  const isToday =
+                    dateObj.getDate() === now.getDate() &&
+                    dateObj.getMonth() === now.getMonth() &&
+                    dateObj.getFullYear() === now.getFullYear();
 
                   return (
-                    <tr key={dateStr} className="hover:bg-neutral-900/60 transition-colors">
+                    <tr key={dateStr} className={`hover:bg-neutral-900/60 transition-colors ${isToday ? 'bg-teal-950/20' : ''}`}>
                       {/* Date column */}
-                      <td className="p-2 border-r border-neutral-800 text-center whitespace-nowrap bg-neutral-950/40">
-                        <span className="block text-[11px] font-bold text-neutral-200 leading-tight">
-                          {formattedDayMonth}
-                        </span>
-                        <span className="block text-[10px] text-neutral-500 font-medium mt-0.5">
+                      <td className={`p-2 border-r border-neutral-800 text-center whitespace-nowrap ${isToday ? 'bg-teal-950/40' : 'bg-neutral-950/40'}`}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className={`block text-[11px] font-bold leading-tight ${isToday ? 'text-teal-300' : 'text-neutral-200'}`}>
+                            {formattedDayMonth}
+                          </span>
+                          {isToday && (
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                              Today
+                            </span>
+                          )}
+                        </div>
+                        <span className={`block text-[10px] font-medium mt-0.5 ${isToday ? 'text-teal-400/80' : 'text-neutral-500'}`}>
                           {dayName}
                         </span>
                       </td>

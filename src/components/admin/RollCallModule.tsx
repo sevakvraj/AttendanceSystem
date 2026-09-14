@@ -84,20 +84,36 @@ export default function RollCallModule({
                     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)); 
                   }} 
                   className="text-neutral-500 hover:text-white p-1"
+                  title="Previous Month"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <span className="font-bold text-sm text-white">
-                  {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-white">
+                    {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentDate(new Date());
+                      setIsCalendarOpen(false);
+                    }}
+                    className="text-[10px] font-bold text-amber-400 bg-amber-950/50 border border-amber-500/40 px-2 py-0.5 rounded-full hover:bg-amber-900/60 transition-colors shadow-sm cursor-pointer"
+                    title="Jump to Today"
+                  >
+                    Today
+                  </button>
+                </div>
                 <button 
                   onClick={(e) => { 
                     e.stopPropagation(); 
                     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)); 
                   }} 
                   className="text-neutral-500 hover:text-white p-1"
+                  title="Next Month"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -113,6 +129,7 @@ export default function RollCallModule({
               
               {/* Legend */}
               <div className="mt-3 flex space-x-3 text-[10px] font-bold text-neutral-500 justify-center">
+                <div className="flex items-center"><span className="w-2 h-2 rounded-full border border-amber-400 bg-amber-400/30 mr-1"></span> Today</div>
                 <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-blue-500 mr-1"></span> Holiday</div>
                 <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-red-500/20 border border-red-500/50 mr-1"></span> Sunday</div>
               </div>
