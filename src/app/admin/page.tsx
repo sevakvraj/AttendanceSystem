@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { fetchCurrentSession, logout } from "@/lib/auth-client";
 import { 
   getAllStudents, 
   addStudent, 
@@ -54,6 +55,20 @@ const DAY_NAMES: CustomSlot["day"][] = [
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+
+  // Strictly verify Admin session on mount
+  useEffect(() => {
+    async function verifyAdmin() {
+      const session = await fetchCurrentSession();
+      if (!session || session.role !== "admin") {
+        logout();
+        return;
+      }
+      setIsAdminAuthenticated(true);
+    }
+    verifyAdmin();
+  }, []);
   
   const [currentView, setCurrentView] = useState<AdminView>("rollcall");
   
@@ -494,6 +509,15 @@ export default function AdminDashboard() {
     s.pid.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-3 border-amber-500/30 border-t-amber-400 rounded-full animate-spin mb-3"></div>
+        <p className="text-xs font-bold text-neutral-400 tracking-wider uppercase">Verifying Admin Access...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center">
       <div className="w-full max-w-md bg-neutral-950 min-h-screen shadow-2xl flex flex-col relative pb-6">
@@ -502,7 +526,7 @@ export default function AdminDashboard() {
         <AdminHeader
           currentView={currentView}
           onSelectView={(v) => setCurrentView(v)}
-          onLogout={() => router.push("/")}
+          onLogout={() => logout()}
         />
         
         {/* Dynamic Modular Content View */}

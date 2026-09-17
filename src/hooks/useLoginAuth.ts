@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { findStudent } from "@/services/db";
+import { useState, useEffect } from "react";
 
 export function useLoginAuth() {
-  const router = useRouter();
   const [pid, setPid] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +10,20 @@ export function useLoginAuth() {
   const [isPidFocused, setIsPidFocused] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err === "session_expired") {
+        setError("Your session has expired or is invalid. Please log in again.");
+      } else if (err === "unauthorized_admin") {
+        setError("Access denied: Admin credentials required.");
+      } else if (err === "student_unauthorized") {
+        setError("Please log in to access the student portal.");
+      }
+    }
+  }, []);
 
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
@@ -25,37 +36,38 @@ export function useLoginAuth() {
     const cleanPwd = password.trim();
 
     try {
-      const user: any = await findStudent(cleanInput);
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          identifier: cleanInput,
+          password: cleanPwd,
+        }),
+      });
 
-      if (user) {
-        const isPasswordMatch =
-          user.password === cleanPwd ||
-          user.password?.toUpperCase() === cleanPwd.toUpperCase();
+      const data = await res.json();
 
-        if (isPasswordMatch) {
-          if (user.pid?.toUpperCase() === "ADMIN001") {
-            router.push("/admin");
-          } else {
-            if (user.isBlocked) {
-              setError("Admin blocked you. Please contact your class representative / admin.");
-              return;
-            }
-            // Store student credentials in localStorage
-            localStorage.setItem("studentPid", user.pid);
-            localStorage.setItem("studentName", user.name);
-            localStorage.setItem("studentEmail", user.email || "");
-            localStorage.setItem("studentPhone", user.phone || "");
-            router.push("/student");
-          }
-        } else {
-          setError("Invalid password. (Default is your Student PID, e.g. MG26001)");
-        }
+      if (!res.ok) {
+        setError(data.error || "Authentication failed. Please verify your credentials.");
+        return;
+      }
+
+      if (data.role === "admin") {
+        window.location.href = "/admin";
       } else {
-        setError("Account not found. Please enter a valid Student PID (e.g. MG26001).");
+        // Store verified credentials in client cache
+        localStorage.setItem("studentPid", data.user.pid);
+        localStorage.setItem("studentName", data.user.name);
+        if (data.user.email) localStorage.setItem("studentEmail", data.user.email);
+        if (data.user.phone) localStorage.setItem("studentPhone", data.user.phone);
+
+        window.location.href = "/student";
       }
     } catch (err) {
-      console.error(err);
-      setError("Failed to connect to database. Please check your connection.");
+      console.error("Login request error:", err);
+      setError("Failed to connect to authentication server. Please check your connection.");
     } finally {
       setIsLoading(false);
     }

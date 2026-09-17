@@ -70,6 +70,7 @@ export default function LoginPage() {
               showPassword={showPassword}
               usernameLength={pid.length}
               isPidFocused={isPidFocused}
+              hasPassword={password.length > 0}
             />
           </div>
 
@@ -150,7 +151,7 @@ export default function LoginPage() {
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                   className="w-full bg-neutral-950/80 border border-neutral-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-2xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-neutral-600 outline-none transition-all font-medium tracking-wide"
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   autoComplete="current-password"
                   required
                 />
@@ -158,8 +159,12 @@ export default function LoginPage() {
                 {/* Aesthetic Eye Icon Toggle Button */}
                 <button
                   type="button"
+                  onMouseDown={(e) => {
+                    // Prevent button click from causing input to blur
+                    e.preventDefault();
+                  }}
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800/60 transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800/60 transition-colors cursor-pointer z-10"
                   title={showPassword ? "Hide password" : "Show password"}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >

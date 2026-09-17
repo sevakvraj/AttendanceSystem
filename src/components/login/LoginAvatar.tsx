@@ -7,6 +7,7 @@ interface LoginAvatarProps {
   showPassword: boolean;
   usernameLength: number;
   isPidFocused: boolean;
+  hasPassword?: boolean;
 }
 
 export default function LoginAvatar({
@@ -14,15 +15,20 @@ export default function LoginAvatar({
   showPassword,
   usernameLength,
   isPidFocused,
+  hasPassword = false,
 }: LoginAvatarProps) {
-  // Calculate pupil tracking when typing student PID
-  const pupilX = isPidFocused
+  // Password is active if field is focused OR user has typed password content
+  const isPasswordActive = isPasswordFocused || (hasPassword && !isPidFocused);
+  const isCoveringBoth = isPasswordActive && !showPassword;
+  const isPeeking = isPasswordActive && showPassword;
+
+  // Calculate pupil tracking when typing student PID or peeking down at password
+  const pupilX = isPeeking
+    ? 2
+    : isPidFocused
     ? Math.min(Math.max((usernameLength - 4) * 0.7, -4.5), 4.5)
     : 0;
-  const pupilY = isPidFocused ? 4 : 0;
-
-  const isCoveringBoth = isPasswordFocused && !showPassword;
-  const isPeeking = isPasswordFocused && showPassword;
+  const pupilY = isPeeking ? 4 : isPidFocused ? 4 : 0;
 
   return (
     <div className="relative w-36 h-36 mx-auto flex items-center justify-center select-none">
@@ -212,7 +218,7 @@ export default function LoginAvatar({
           )}
 
           {/* RIGHT EYE */}
-          {isPasswordFocused ? (
+          {isPasswordActive ? (
             // Closed Right Eye
             <g>
               <path
@@ -273,22 +279,22 @@ export default function LoginAvatar({
             className="transition-all duration-300 ease-out"
             style={{
               transform: isCoveringBoth
-                ? "translate(42px, 66px) rotate(-6deg)"
+                ? "translate(40px, 70px) rotate(-6deg)"
                 : isPeeking
-                ? "translate(38px, 98px) rotate(-22deg)"
-                : "translate(42px, 145px) scale(0.6)",
-              opacity: isPasswordFocused ? 1 : 0,
+                ? "translate(34px, 102px) rotate(-22deg)"
+                : "translate(40px, 145px) scale(0.6)",
+              opacity: isPasswordActive ? 1 : 0,
               transformOrigin: "56px 80px",
             }}
           >
             <path
-              d="M 0 0 C 0 -14, 30 -14, 30 0 C 30 16, 22 24, 15 24 C 8 24, 0 16, 0 0 Z"
+              d="M 0 0 C 0 -16, 32 -16, 32 0 C 32 18, 24 26, 16 26 C 8 26, 0 18, 0 0 Z"
               fill="url(#handGrad)"
               stroke="#ea580c"
               strokeWidth="1.6"
             />
-            <line x1="10" y1="-9" x2="10" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
-            <line x1="20" y1="-9" x2="20" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
+            <line x1="11" y1="-10" x2="11" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
+            <line x1="21" y1="-10" x2="21" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
           </g>
 
           {/* Right Hand */}
@@ -296,21 +302,21 @@ export default function LoginAvatar({
             filter="url(#handShadow)"
             className="transition-all duration-300 ease-out"
             style={{
-              transform: isPasswordFocused
-                ? "translate(88px, 66px) rotate(6deg)"
+              transform: isPasswordActive
+                ? "translate(88px, 70px) rotate(6deg)"
                 : "translate(88px, 145px) scale(0.6)",
-              opacity: isPasswordFocused ? 1 : 0,
+              opacity: isPasswordActive ? 1 : 0,
               transformOrigin: "104px 80px",
             }}
           >
             <path
-              d="M 0 0 C 0 -14, 30 -14, 30 0 C 30 16, 22 24, 15 24 C 8 24, 0 16, 0 0 Z"
+              d="M 0 0 C 0 -16, 32 -16, 32 0 C 32 18, 24 26, 16 26 C 8 26, 0 18, 0 0 Z"
               fill="url(#handGrad)"
               stroke="#ea580c"
               strokeWidth="1.6"
             />
-            <line x1="10" y1="-9" x2="10" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
-            <line x1="20" y1="-9" x2="20" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
+            <line x1="11" y1="-10" x2="11" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
+            <line x1="21" y1="-10" x2="21" y2="4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" opacity="0.65" />
           </g>
         </svg>
       </div>

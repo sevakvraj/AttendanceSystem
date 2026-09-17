@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getStudentAttendanceStats, getStudentAttendanceHistory, AttendanceHistoryItem, getStudentByPid } from "@/services/db";
+import { fetchCurrentSession, logout } from "@/lib/auth-client";
 import StudentHeader from "@/components/student/StudentHeader";
 import DashboardGrid, { StudentViewOption } from "@/components/student/DashboardGrid";
 import AttendanceView, { SubjectStat } from "@/components/student/AttendanceView";
@@ -38,30 +39,38 @@ export default function StudentDashboard() {
   const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
-    const pid = localStorage.getItem("studentPid") || "MG26001";
-    const name = localStorage.getItem("studentName") || "Student";
-    setStudentInfo({ pid, name });
-
-    async function fetchData() {
+    async function initAndFetchData() {
       try {
-        // Fetch up-to-date student profile from Firestore (reflects admin changes)
+        // 1. Strictly verify session from server JWT cookie
+        const session = await fetchCurrentSession();
+        if (!session || !session.pid) {
+          logout();
+          return;
+        }
+
+        const pid = session.pid;
+        const name = session.name || "Student";
+        setStudentInfo({ pid, name });
+
+        // 2. Fetch up-to-date student profile from Firestore (reflects admin changes)
         const profile = await getStudentByPid(pid);
         if (profile) {
           setStudentInfo({ pid: profile.pid, name: profile.name });
           if (profile.isBlocked) {
             setIsBlocked(true);
+            setIsLoading(false);
             return;
           }
         }
 
-        // Fetch attendance aggregated statistics
+        // 3. Fetch attendance aggregated statistics strictly for this student
         const stats = await getStudentAttendanceStats(pid);
 
-        // Fetch detailed lecture history
+        // 4. Fetch detailed lecture history strictly for this student
         const history = await getStudentAttendanceHistory(pid);
         setAttendanceHistory(history);
 
-        // Merge stats into template (flexible name matching e.g. Python / Python Programming)
+        // 5. Merge stats into template (flexible name matching e.g. Python / Python Programming)
         const updatedSubjects = SUBJECT_TEMPLATE.map((sub) => {
           const stat =
             stats[sub.name] ||
@@ -87,12 +96,22 @@ export default function StudentDashboard() {
         setIsLoading(false);
       }
     }
-    fetchData();
+
+    initAndFetchData();
   }, []);
 
   const totalPresent = subjects.reduce((acc, curr) => acc + curr.present, 0);
   const totalClasses = subjects.reduce((acc, curr) => acc + curr.total, 0);
   const overallPercentage = totalClasses === 0 ? "0.0" : ((totalPresent / totalClasses) * 100).toFixed(1);
+
+  if (isLoading && !studentInfo.pid) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-3 border-teal-500/30 border-t-teal-400 rounded-full animate-spin mb-3"></div>
+        <p className="text-xs font-bold text-neutral-400 tracking-wider uppercase">Verifying Session...</p>
+      </div>
+    );
+  }
 
   if (isBlocked) {
     return (
@@ -111,11 +130,8 @@ export default function StudentDashboard() {
             Please contact your Class Representative or Department Office to restore your access.
           </p>
           <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = "/login";
-            }}
-            className="w-full py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs transition-colors"
+            onClick={() => logout()}
+            className="w-full py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs transition-colors cursor-pointer"
           >
             Logout & Return to Login
           </button>
