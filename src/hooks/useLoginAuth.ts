@@ -32,7 +32,7 @@ export function useLoginAuth() {
     setError("");
     setIsLoading(true);
 
-    const cleanInput = pid.trim();
+    const cleanInput = pid.trim().toUpperCase();
     const cleanPwd = password.trim();
 
     try {

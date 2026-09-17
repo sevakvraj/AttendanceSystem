@@ -112,10 +112,10 @@ export default function LoginPage() {
                 <input
                   type="text"
                   value={pid}
-                  onChange={(e) => setPid(e.target.value)}
+                  onChange={(e) => setPid(e.target.value.toUpperCase())}
                   onFocus={() => setIsPidFocused(true)}
                   onBlur={() => setIsPidFocused(false)}
-                  className="w-full bg-neutral-950/80 border border-neutral-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-neutral-600 outline-none transition-all font-medium"
+                  className="w-full bg-neutral-950/80 border border-neutral-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-neutral-600 placeholder:normal-case placeholder:font-sans outline-none transition-all font-medium uppercase font-mono tracking-wider"
                   placeholder="e.g. MG26001"
                   autoCapitalize="characters"
                   autoComplete="username"
